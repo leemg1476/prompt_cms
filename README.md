@@ -6,6 +6,11 @@ Prompt CMS sample implementation with:
 - Agent: FastAPI + LangGraph (test runtime)
 - DB: PostgreSQL
 
+Agent prompt sync mode:
+- Backend worker pushes prompt payload
+- Agent writes `*.yml` under `PROMPT_YAML_DIR`
+- Agent reloads YAML and serves updated prompt in runtime
+
 ## Structure
 - `docs/implementation/frontend.md`
 - `docs/implementation/backend.md`

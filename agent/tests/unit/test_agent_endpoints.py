@@ -30,6 +30,11 @@ def test_push_then_run_with_new_prompt(client) -> None:
     )
     assert push_response.status_code == 200
     assert push_response.json()["applied"] is True
+    assert push_response.json()["source"] == "yaml_file"
+
+    files_response = client.get("/internal/prompts/files")
+    assert files_response.status_code == 200
+    assert any(name.endswith(".yml") for name in files_response.json()["files"])
 
     run_response = client.post(
         "/api/agent/run",

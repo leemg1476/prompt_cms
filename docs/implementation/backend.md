@@ -32,6 +32,7 @@
 3. Worker run
 - pull pending deliveries due for retry
 - send HTTP POST to agent endpoint
+- payload includes `deployment_mode=yaml_file_sync`
 - mark success or schedule retry
 
 ## Retry Policy

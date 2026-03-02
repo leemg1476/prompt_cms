@@ -15,6 +15,7 @@ class PushPayload(BaseModel):
     content: str = Field(min_length=1)
     variables_schema: dict[str, Any] | None = None
     published_at: str | None = None
+    deployment_mode: str | None = None
 
 
 @router.post("/push")
@@ -48,13 +49,14 @@ def push_prompt(
             "cache_state": "already_up_to_date",
         }
 
-    prompt_store.upsert(
+    yaml_path = prompt_store.write_prompt_yaml(
         prompt_key=payload.prompt_key,
         version=payload.version,
         checksum=payload.checksum,
         content=payload.content,
         variables_schema=payload.variables_schema,
     )
+    prompt_store.load_prompt_yaml_file(yaml_path)
     prompt_store.idempotency_seen.add(idempotency_key)
     return {
         "ok": True,
@@ -62,6 +64,8 @@ def push_prompt(
         "version": payload.version,
         "applied": True,
         "cache_state": "updated",
+        "source": "yaml_file",
+        "yaml_path": str(yaml_path),
     }
 
 
@@ -76,5 +80,11 @@ def read_cache() -> dict[str, Any]:
                 "updated_at": item.updated_at.isoformat(),
             }
             for item in prompt_store.cache.values()
-        ]
+        ],
+        "yaml_dir": str(prompt_store.yaml_dir),
     }
+
+
+@router.get("/files")
+def list_yaml_files() -> dict[str, Any]:
+    return {"files": [str(path.name) for path in prompt_store.yaml_dir.glob("*.yml")]}

@@ -54,6 +54,7 @@ def run_worker_once(db: Session, limit: int = 50) -> WorkerRunResult:
                 "content": version.content,
                 "variables_schema": version.variables_schema,
                 "published_at": event.published_at.isoformat(),
+                "deployment_mode": "yaml_file_sync",
             }
 
             headers = {

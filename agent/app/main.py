@@ -18,14 +18,17 @@ app.add_middleware(
 
 @app.on_event("startup")
 def bootstrap_prompt() -> None:
-    # Bootstraps one prompt so /api/agent/run can be tested immediately.
-    prompt_store.upsert(
-        prompt_key="default.system",
-        version=1,
-        checksum="bootstrapped",
-        content="SYSTEM: You are a test LangGraph agent.",
-        variables_schema=None,
-    )
+    loaded = prompt_store.load_all_from_yaml()
+    if loaded == 0:
+        # Bootstraps one prompt file so the agent starts with a valid YAML-backed prompt.
+        path = prompt_store.write_prompt_yaml(
+            prompt_key="default.system",
+            version=1,
+            checksum="bootstrapped",
+            content="SYSTEM: You are a test LangGraph agent.",
+            variables_schema=None,
+        )
+        prompt_store.load_prompt_yaml_file(path)
 
 
 @app.get("/health")
