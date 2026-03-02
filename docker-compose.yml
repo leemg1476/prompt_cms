@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:16
+    container_name: prompt-cms-db
+    environment:
+      POSTGRES_DB: prompt_cms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d prompt_cms"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+    container_name: prompt-cms-backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/prompt_cms
+      PUSH_AUTH_TOKEN: local-dev-token
+      CMS_ENVIRONMENT: dev
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  agent:
+    build:
+      context: ./agent
+    container_name: prompt-cms-agent
+    environment:
+      PUSH_AUTH_TOKEN: local-dev-token
+    ports:
+      - "8010:8010"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: prompt-cms-frontend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+      - agent
+
+volumes:
+  pgdata:
