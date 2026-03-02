@@ -3,9 +3,9 @@ services:
     image: postgres:16
     container_name: prompt-cms-db
     environment:
-      POSTGRES_DB: prompt_cms
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-prompt_cms}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
@@ -22,9 +22,9 @@ services:
       context: ./backend
     container_name: prompt-cms-backend
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/prompt_cms
-      PUSH_AUTH_TOKEN: local-dev-token
-      CMS_ENVIRONMENT: dev
+      DATABASE_URL: ${BACKEND_DATABASE_URL:-postgresql+psycopg://postgres:postgres@db:5432/prompt_cms}
+      PUSH_AUTH_TOKEN: ${PUSH_AUTH_TOKEN:-local-dev-token}
+      CMS_ENVIRONMENT: ${CMS_ENVIRONMENT:-dev}
     ports:
       - "8000:8000"
     depends_on:
@@ -36,8 +36,13 @@ services:
       context: ./agent
     container_name: prompt-cms-agent
     environment:
-      PUSH_AUTH_TOKEN: local-dev-token
-      PROMPT_YAML_DIR: /app/data/prompts
+      PUSH_AUTH_TOKEN: ${PUSH_AUTH_TOKEN:-local-dev-token}
+      PROMPT_YAML_DIR: ${PROMPT_YAML_DIR:-/app/data/prompts}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGCHAIN_TRACING_V2: ${LANGCHAIN_TRACING_V2:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-prompt-cms-agent}
+      LANGSMITH_ENDPOINT: ${LANGSMITH_ENDPOINT:-}
     ports:
       - "8010:8010"
     volumes:
@@ -48,9 +53,23 @@ services:
       context: ./frontend
     container_name: prompt-cms-frontend
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      NEXT_PUBLIC_API_BASE_URL: ${FRONTEND_API_BASE_URL:-http://localhost:8000}
     ports:
       - "3000:3000"
+    depends_on:
+      - backend
+      - agent
+
+  agent-ui:
+    build:
+      context: ./agent_streamlit
+    container_name: prompt-cms-agent-ui
+    environment:
+      AGENT_BASE_URL: ${STREAMLIT_AGENT_BASE_URL:-http://agent:8010}
+      BACKEND_BASE_URL: ${STREAMLIT_BACKEND_BASE_URL:-http://backend:8000}
+      PUSH_AUTH_TOKEN: ${PUSH_AUTH_TOKEN:-local-dev-token}
+    ports:
+      - "8501:8501"
     depends_on:
       - backend
       - agent

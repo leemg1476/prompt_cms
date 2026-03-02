@@ -4,5 +4,6 @@ __pycache__/
 node_modules/
 .next/
 dist/
+.env
 agent/data/prompts/*.yml
 !agent/data/prompts/.gitkeep

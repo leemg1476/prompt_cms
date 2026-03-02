@@ -17,6 +17,7 @@ from app.schemas.prompts import (
     RollbackRequest,
 )
 from app.services.publish_service import create_draft, publish_prompt, rollback_prompt
+from app.services.worker_service import run_worker_once
 
 router = APIRouter(prefix="/api", tags=["cms"])
 
@@ -89,7 +90,14 @@ def publish_prompt_version(
     env: str = Query(default=settings.cms_environment),
     db: Session = Depends(get_db),
 ) -> PublishResult:
-    return publish_prompt(db, prompt_key, env, body.published_by)
+    result = publish_prompt(db, prompt_key, env, body.published_by)
+    try:
+        # Trigger one immediate dispatch attempt after publish.
+        run_worker_once(db, limit=50)
+    except Exception:  # noqa: BLE001
+        # Publish transaction is already committed; worker failures are retried later.
+        pass
+    return result
 
 
 @router.post("/prompts/{prompt_key}/rollback", response_model=PublishResult)
@@ -99,7 +107,13 @@ def rollback_prompt_version(
     env: str = Query(default=settings.cms_environment),
     db: Session = Depends(get_db),
 ) -> PublishResult:
-    return rollback_prompt(db, prompt_key, body.to_version, env, body.published_by)
+    result = rollback_prompt(db, prompt_key, body.to_version, env, body.published_by)
+    try:
+        # Trigger one immediate dispatch attempt after rollback publish.
+        run_worker_once(db, limit=50)
+    except Exception:  # noqa: BLE001
+        pass
+    return result
 
 
 @router.get("/publish-events", response_model=list[PublishEventItem])

@@ -28,6 +28,7 @@
 - update active pointer
 - create publish event
 - create one delivery per subscribed agent
+- trigger worker once immediately (best effort)
 
 3. Worker run
 - pull pending deliveries due for retry

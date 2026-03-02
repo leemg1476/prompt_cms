@@ -1,10 +1,10 @@
-import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import yaml
+from app.core.config import settings
 
 
 @dataclass
@@ -21,7 +21,7 @@ class PromptStore:
     def __init__(self, yaml_dir: str | None = None) -> None:
         self.cache: dict[str, PromptItem] = {}
         self.idempotency_seen: set[str] = set()
-        target_dir = yaml_dir or os.getenv("PROMPT_YAML_DIR", "./data/prompts")
+        target_dir = yaml_dir or settings.prompt_yaml_dir
         self.yaml_dir = Path(target_dir)
         self.yaml_dir.mkdir(parents=True, exist_ok=True)
 

@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
+from app.core.config import settings
 from app.services.store import prompt_store
 
 router = APIRouter(prefix="/internal/prompts", tags=["internal-prompts"])
@@ -24,8 +25,11 @@ def push_prompt(
     authorization: str | None = Header(default=None),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ) -> dict[str, Any]:
-    if not authorization or not authorization.startswith("Bearer "):
+    if not authorization:
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization")
+    expected = f"Bearer {settings.push_auth_token}"
+    if authorization != expected:
+        raise HTTPException(status_code=401, detail="Invalid bearer token")
     if not idempotency_key:
         raise HTTPException(status_code=400, detail="Missing Idempotency-Key")
 

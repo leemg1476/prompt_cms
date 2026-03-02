@@ -4,12 +4,18 @@ Prompt CMS sample implementation with:
 - Frontend: Next.js
 - Backend: FastAPI
 - Agent: FastAPI + LangGraph (test runtime)
+- Agent UI: Streamlit
 - DB: PostgreSQL
 
 Agent prompt sync mode:
 - Backend worker pushes prompt payload
 - Agent writes `*.yml` under `PROMPT_YAML_DIR`
 - Agent reloads YAML and serves updated prompt in runtime
+- Publish/Rollback API triggers one worker run immediately (best effort)
+
+LangSmith tracing:
+- Configure via root `.env`
+- Agent run endpoint accepts `trace_name`, `trace_tags`, `trace_metadata`
 
 ## Structure
 - `docs/implementation/frontend.md`
@@ -18,6 +24,7 @@ Agent prompt sync mode:
 - `frontend/`
 - `backend/`
 - `agent/`
+- `agent_streamlit/`
 - `db/init.sql`
 - `docker-compose.yml`
 
@@ -35,7 +42,8 @@ Use Docker after unit tests pass, for service-level integration checks.
 2. Frontend: `http://localhost:3000`
 3. Backend: `http://localhost:8000/docs`
 4. Agent: `http://localhost:8010/docs`
-5. Health:
+5. Agent Streamlit: `http://localhost:8501`
+6. Health:
 - Backend: `http://localhost:8000/health`
 - Agent: `http://localhost:8010/health`
 
@@ -68,6 +76,13 @@ Use Docker after unit tests pass, for service-level integration checks.
 4. `pip install -r requirements-dev.txt`
 5. `uvicorn app.main:app --reload --port 8010`
 
+### Agent Streamlit UI
+1. `cd agent_streamlit`
+2. `python -m venv .venv`
+3. `.\\.venv\\Scripts\\activate`
+4. `pip install -r requirements.txt`
+5. `streamlit run app.py --server.port 8501`
+
 ## Minimal Flow
 1. Open `/prompts`
 2. Open a prompt key and save draft
@@ -78,3 +93,10 @@ Use Docker after unit tests pass, for service-level integration checks.
 - `GET http://localhost:8010/internal/prompts/cache`
 7. Run agent:
 - `POST http://localhost:8010/api/agent/run`
+
+## Environment Variables
+- Copy `.env.example` to `.env` and fill values.
+- LangSmith keys should be set in `.env`:
+- `LANGSMITH_API_KEY`
+- `LANGSMITH_TRACING=true` (or `LANGCHAIN_TRACING_V2=true`)
+- `LANGSMITH_PROJECT`

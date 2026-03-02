@@ -11,6 +11,7 @@ def test_run_agent_with_bootstrap_prompt(client) -> None:
     body = response.json()
     assert body["ok"] is True
     assert "user_input=hello" in body["output"]
+    assert body["tracing_enabled"] is False
 
 
 @pytest.mark.unit
@@ -57,3 +58,12 @@ def test_push_requires_idempotency(client) -> None:
         },
     )
     assert response.status_code == 400
+
+
+@pytest.mark.unit
+def test_tracing_status_endpoint(client) -> None:
+    response = client.get("/api/agent/tracing")
+    assert response.status_code == 200
+    body = response.json()
+    assert "langsmith_tracing" in body
+    assert "has_api_key" in body
